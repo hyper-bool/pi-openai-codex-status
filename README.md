@@ -2,6 +2,8 @@
 
 Pi extension that shows OpenAI hourly and weekly subscription limits like Codex with a status command.
 
+![Screenshot of the OpenAI Codex status overlay](./assets/screenshot.png)
+
 ## Install
 
 ### From npm
