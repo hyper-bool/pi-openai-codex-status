@@ -1,0 +1,24 @@
+{
+  "name": "pi-openai-codex-status",
+  "version": "0.1.0",
+  "description": "Pi extension that shows OpenAI Codex usage, credits, and rate limit status in a TUI overlay.",
+  "type": "module",
+  "keywords": ["pi-package", "pi-extension", "openai", "codex", "status"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_NAME/pi-openai-codex-status.git"
+  },
+  "homepage": "https://github.com/YOUR_GITHUB_NAME/pi-openai-codex-status#readme",
+  "bugs": {
+    "url": "https://github.com/YOUR_GITHUB_NAME/pi-openai-codex-status/issues"
+  },
+  "files": ["extensions", "README.md", "LICENSE"],
+  "pi": {
+    "extensions": ["./extensions"]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*"
+  }
+}
