@@ -7,11 +7,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YOUR_GITHUB_NAME/pi-openai-codex-status.git"
+    "url": "git+https://github.com/NxcOP1891/pi-openai-codex-status.git"
   },
-  "homepage": "https://github.com/YOUR_GITHUB_NAME/pi-openai-codex-status#readme",
+  "homepage": "https://github.com/NxcOP1891/pi-openai-codex-status#readme",
   "bugs": {
-    "url": "https://github.com/YOUR_GITHUB_NAME/pi-openai-codex-status/issues"
+    "url": "https://github.com/NxcOP1891/pi-openai-codex-status/issues"
   },
   "files": ["extensions", "README.md", "LICENSE"],
   "pi": {

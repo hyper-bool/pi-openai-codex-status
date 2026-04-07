@@ -1,6 +1,6 @@
 # pi-openai-codex-status
 
-A pi extension that adds `/status` to show OpenAI Codex usage, credits, and rate limits in an interactive TUI overlay.
+Pi extension that shows OpenAI hourly and weekly subscription limits like Codex with a status command.
 
 ## Install
 
@@ -13,7 +13,7 @@ pi install npm:pi-openai-codex-status
 ### From GitHub
 
 ```bash
-pi install git:github.com/YOUR_GITHUB_NAME/pi-openai-codex-status
+pi install git:github.com/NxcOP1891/pi-openai-codex-status
 ```
 
 ## Usage
@@ -31,29 +31,6 @@ pi install git:github.com/YOUR_GITHUB_NAME/pi-openai-codex-status
 - Shows credits status
 - Shows a centered overlay inside pi's TUI
 - Caches the last snapshot briefly to make reopening faster
-
-## Local development
-
-You can test the package before publishing:
-
-```bash
-pi -e ./extensions/openai-status.ts
-```
-
-Or install it locally as a pi package:
-
-```bash
-pi install .
-```
-
-## Publish checklist
-
-1. Replace `YOUR_GITHUB_NAME` in `package.json` and this README.
-2. Create the GitHub repo.
-3. Push this folder to GitHub.
-4. Run `npm login`.
-5. Run `npm publish --dry-run`.
-6. Run `npm publish`.
 
 ## Notes
 
