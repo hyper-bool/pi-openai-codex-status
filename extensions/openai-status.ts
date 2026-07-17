@@ -1,5 +1,9 @@
-import { AuthStorage, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Key, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import {
+	readStoredCredential,
+	type ExtensionAPI,
+	type ModelRegistry,
+} from "@earendil-works/pi-coding-agent";
+import { Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 type RawRateLimitWindowSnapshot = {
 	used_percent?: number | string | null;
@@ -65,15 +69,11 @@ type StatusSnapshot = {
 type CodexCredential = {
 	accessToken: string;
 	accountId: string;
-	expires?: number;
 };
 
-type OAuthCredentialShape = {
-	type: "oauth";
-	access?: string;
-	refresh?: string;
-	expires?: number;
-	accountId?: string;
+type StoredOAuthCredentialShape = {
+	type?: unknown;
+	accountId?: unknown;
 };
 
 const PROVIDER_ID = "openai-codex";
@@ -121,31 +121,24 @@ function getAccountIdFromToken(token: string): string | undefined {
 	return undefined;
 }
 
-async function getCodexCredential(authStorage: AuthStorage): Promise<CodexCredential | null> {
-	authStorage.reload();
-	let cred = authStorage.get(PROVIDER_ID) as OAuthCredentialShape | undefined;
-	if (!cred || cred.type !== "oauth") return null;
-
-	if (typeof cred.expires === "number" && Date.now() >= cred.expires) {
-		await authStorage.refreshOAuthTokenWithLock(PROVIDER_ID);
-		authStorage.reload();
-		cred = authStorage.get(PROVIDER_ID) as OAuthCredentialShape | undefined;
-		if (!cred || cred.type !== "oauth") return null;
-	}
-
-	const accessToken = cred.access ?? (await authStorage.getApiKey(PROVIDER_ID));
+async function getCodexCredential(modelRegistry: ModelRegistry): Promise<CodexCredential | null> {
+	const accessToken = await modelRegistry.getApiKeyForProvider(PROVIDER_ID);
 	if (!accessToken) return null;
 
-	const accountId = cred.accountId ?? getAccountIdFromToken(accessToken);
+	// Current Codex tokens carry this claim. Keep accountId only as a compatibility
+	// fallback for credentials written by older Pi versions.
+	let accountId = getAccountIdFromToken(accessToken);
 	if (!accountId) {
-		throw new Error("OpenAI Codex credential is missing ChatGPT account id.");
+		const stored = readStoredCredential(PROVIDER_ID) as StoredOAuthCredentialShape | undefined;
+		if (stored?.type === "oauth" && typeof stored.accountId === "string" && stored.accountId.length > 0) {
+			accountId = stored.accountId;
+		}
+	}
+	if (!accountId) {
+		throw new Error("OpenAI Codex credential is missing the ChatGPT account ID (token claim and stored fallback unavailable).");
 	}
 
-	return {
-		accessToken,
-		accountId,
-		expires: cred.expires,
-	};
+	return { accessToken, accountId };
 }
 
 function normalizeWindow(window: RawRateLimitWindowSnapshot | null | undefined): LimitWindow | undefined {
@@ -196,8 +189,8 @@ function normalizePayload(payload: RawRateLimitStatusPayload): StatusSnapshot {
 	};
 }
 
-async function fetchUsageSnapshot(authStorage: AuthStorage, signal?: AbortSignal): Promise<StatusSnapshot> {
-	const credential = await getCodexCredential(authStorage);
+async function fetchUsageSnapshot(modelRegistry: ModelRegistry, signal?: AbortSignal): Promise<StatusSnapshot> {
+	const credential = await getCodexCredential(modelRegistry);
 	if (!credential) {
 		throw new Error("You are not logged into ChatGPT Plus/Pro Codex in pi. Run /login and choose OpenAI Codex.");
 	}
@@ -299,7 +292,7 @@ class StatusOverlay {
 	private theme: any;
 	private modelLabel: string;
 	private done: (value?: void) => void;
-	private authStorage: AuthStorage;
+	private modelRegistry: ModelRegistry;
 	private requestRender: () => void;
 	private snapshot: StatusSnapshot | null;
 	private errorMessage: string | null = null;
@@ -313,7 +306,7 @@ class StatusOverlay {
 		tui: any;
 		theme: any;
 		done: (value?: void) => void;
-		authStorage: AuthStorage;
+		modelRegistry: ModelRegistry;
 		modelLabel: string;
 		requestRender: () => void;
 		initialSnapshot: StatusSnapshot | null;
@@ -321,7 +314,7 @@ class StatusOverlay {
 		this.tui = opts.tui;
 		this.theme = opts.theme;
 		this.done = opts.done;
-		this.authStorage = opts.authStorage;
+		this.modelRegistry = opts.modelRegistry;
 		this.modelLabel = opts.modelLabel;
 		this.requestRender = opts.requestRender;
 		this.snapshot = opts.initialSnapshot;
@@ -354,7 +347,7 @@ class StatusOverlay {
 		this.setRefreshing(true);
 		this.requestRender();
 		try {
-			const snapshot = await fetchUsageSnapshot(this.authStorage, this.inFlight.signal);
+			const snapshot = await fetchUsageSnapshot(this.modelRegistry, this.inFlight.signal);
 			if (this.closed) return;
 			cache = snapshot;
 			this.snapshot = snapshot;
@@ -485,13 +478,11 @@ class StatusOverlay {
 }
 
 export default function openAIStatusExtension(pi: ExtensionAPI) {
-	const authStorage = AuthStorage.create();
-
 	pi.registerCommand("status", {
 		description: "Show OpenAI Codex subscription usage status",
 		handler: async (_args, ctx) => {
-			const hasAuth = authStorage.hasAuth(PROVIDER_ID);
-			if (!hasAuth) {
+			const authStatus = ctx.modelRegistry.getProviderAuthStatus(PROVIDER_ID);
+			if (!authStatus.configured) {
 				ctx.ui.notify("Not logged into OpenAI Codex. Run /login and choose OpenAI Codex.", "error");
 				return;
 			}
@@ -511,7 +502,7 @@ export default function openAIStatusExtension(pi: ExtensionAPI) {
 						tui,
 						theme,
 						done,
-						authStorage,
+						modelRegistry: ctx.modelRegistry,
 						modelLabel,
 						requestRender: () => tui.requestRender(),
 						initialSnapshot,
@@ -525,7 +516,6 @@ export default function openAIStatusExtension(pi: ExtensionAPI) {
 						anchor: "center",
 						width: "68%",
 						minWidth: 64,
-						maxWidth: 98,
 						maxHeight: "80%",
 						margin: 1,
 					},

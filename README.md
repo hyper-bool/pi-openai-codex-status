@@ -34,6 +34,10 @@ pi install git:github.com/NxcOP1891/pi-openai-codex-status
 - Shows a centered overlay inside pi's TUI
 - Caches the last snapshot briefly to make reopening faster
 
+## Compatibility
+
+Version 0.2.x supports Pi `>=0.80.8 <0.81.0` using the public model-registry authentication API. Older 0.1.x releases are incompatible with Pi 0.80.8+.
+
 ## Notes
 
 - This extension depends on pi's built-in OpenAI Codex login support.

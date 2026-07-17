@@ -1,6 +1,6 @@
 {
   "name": "pi-openai-codex-status",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pi extension that shows OpenAI usage for hourly and weekly subscription limits like Codex with a /status command.",
   "type": "module",
   "keywords": ["pi-package", "pi-extension", "openai", "codex", "status"],
@@ -17,8 +17,17 @@
   "pi": {
     "extensions": ["./extensions"]
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*"
+    "@earendil-works/pi-coding-agent": ">=0.80.8 <0.81.0",
+    "@earendil-works/pi-tui": ">=0.80.8 <0.81.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.80.10",
+    "@earendil-works/pi-tui": "0.80.10",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
   }
 }
